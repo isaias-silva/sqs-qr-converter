@@ -19,7 +19,6 @@ public class QrCodeService {
 		Path path = Paths.get("output", filename + ".png");
 		MatrixToImageWriter.writeToPath(bitMatrix, "PNG", path);
 
-		System.out.println("QR code gerado: " + path.toString());
 	}
 
 }

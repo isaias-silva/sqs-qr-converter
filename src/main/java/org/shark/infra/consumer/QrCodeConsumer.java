@@ -11,9 +11,13 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 public class QrCodeConsumer {
+
 	private final SqsClient client;
+
 	private final String queueUrl;
+
 	private final QrCodeService qrCodeService;
+
 
 	public QrCodeConsumer(SqsClient client, String queueUrl) {
 		this.client = client;
@@ -21,30 +25,34 @@ public class QrCodeConsumer {
 		this.qrCodeService = new QrCodeService();
 	}
 
-	public void processMessages() {
-		ReceiveMessageRequest request = ReceiveMessageRequest.builder()
-			.queueUrl(queueUrl)
-			.maxNumberOfMessages(5)
-			.waitTimeSeconds(5)
-			.build();
 
-		List<Message> messages = client.receiveMessage(request).messages();
-		for (Message msg : messages) {
-
-			String url = msg.body();
+	public void listen() {
+		while (true) {
 			try {
-				String id = UUID.randomUUID().toString();
+				ReceiveMessageRequest request = ReceiveMessageRequest.builder().queueUrl(queueUrl)
+					.maxNumberOfMessages(5).waitTimeSeconds(5).build();
 
-				qrCodeService.generateByUrl(url, id);
+				List<Message> messages = client.receiveMessage(request).messages();
+				for (Message msg : messages) {
 
-				client.deleteMessage(DeleteMessageRequest.builder()
-					.queueUrl(queueUrl)
-					.receiptHandle(msg.receiptHandle())
-					.build());
+					String url = msg.body();
+					try {
+						String id = UUID.randomUUID().toString();
 
+						qrCodeService.generateByUrl(url, id);
+
+						client.deleteMessage(DeleteMessageRequest.builder().queueUrl(queueUrl)
+							.receiptHandle(msg.receiptHandle()).build());
+
+					} catch (Exception e) {
+						System.err.println("Erro ao gerar QR Code: " + e.getMessage());
+					}
+				}
 			} catch (Exception e) {
-				System.err.println("Erro ao gerar QR Code: " + e.getMessage());
+				System.err.println("Erro ao escutar fila: " + e.getMessage());
+
 			}
+
 		}
 	}
 }

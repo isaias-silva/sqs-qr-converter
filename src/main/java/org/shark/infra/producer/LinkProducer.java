@@ -19,6 +19,6 @@ public class LinkProducer {
 			.build();
 
 		client.sendMessage(request);
-		System.out.println("Link enviado para fila: " + url);
+		System.out.println("Link enviado para fila /qr-queue " + url);
 	}
 }
